@@ -1,0 +1,14 @@
+[
+  {
+    "src": "/assets/page-scripts/00-ready-shim.js",
+    "type": ""
+  },
+  {
+    "src": "/assets/page-scripts/05-loader.js",
+    "type": ""
+  },
+  {
+    "src": "/assets/page-scripts/10-inline.js",
+    "type": "module"
+  }
+]

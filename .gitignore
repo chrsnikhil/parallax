@@ -1,0 +1,22 @@
+node_modules/
+.next/
+out/
+
+# secrets — never commit
+.env
+.env.*
+!.env.example
+
+# build cache
+*.tsbuildinfo
+
+# throwaway debug frames
+_debug-shots/
+
+# heavy raw source video (kept: parallax-demo/assets/livedemo.mp4, the compressed one used by the deck)
+parallax-demo/assets/livedemo_hevc_orig.mp4
+.vercel
+.env*
+
+# but DO track the template (must come last to override .env* above)
+!.env.example

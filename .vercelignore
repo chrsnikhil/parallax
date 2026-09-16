@@ -1,0 +1,5 @@
+# Keep heavy, runtime-irrelevant media out of the Vercel upload.
+# The Next app does not serve these; they bloat the build upload.
+parallax-demo/
+_debug-shots/
+index.html
