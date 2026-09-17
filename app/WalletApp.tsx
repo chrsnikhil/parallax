@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * LUMEN — the wallet, as a minimal tiled bento. Lives at the dark landing where
+ * PARALLAX — the wallet, as a minimal tiled bento. Lives at the dark landing where
  * the hero scroll ends (a fixed overlay that fades in near the bottom, so the
  * hero's 500vh pacing is untouched).
  *

@@ -1,7 +1,7 @@
 /*
  * MetaMask Delegation Toolkit — REAL, on-chain integration (SERVER ONLY).
  *
- * LUMEN's wallet is a genuine MetaMask Smart Account (Hybrid DeleGator) deployed
+ * PARALLAX's wallet is a genuine MetaMask Smart Account (Hybrid DeleGator) deployed
  * on Sepolia. The voice agent does NOT hold the wallet's keys — it holds a
  * SCOPED DELEGATION the owner signed (spend cap + allowlisted target + expiry).
  * When the agent acts, it REDEEMS that delegation on-chain through the
@@ -450,7 +450,7 @@ export async function mmMandateProve(): Promise<{ ok: boolean; error?: string; a
 // exist on-chain (deploy + a little ETH) via the relayer — no KeeperHub, no cap.
 
 // The Ledger Flex account that owns the mandate's smart account (path 44'/60'/0'/0/0).
-// Same device ITHACA armed on; override with MM_FLEX_OWNER if a different Flex signs.
+// Demo Flex owner; override with MM_FLEX_OWNER if a different Flex signs.
 const FLEX_OWNER = (process.env.MM_FLEX_OWNER || "0xDeC312D5Fe0eaef03048BE83137f87cE7907A7Da") as Address
 
 /** Context the browser needs to build the delegation for Ledger signing. */

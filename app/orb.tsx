@@ -1,8 +1,7 @@
 "use client"
 
 /*
- * ElevenLabs-style Orb — ported from the guardian project's
- * components/ui/orb.tsx (r3f + drei + a three.js shader).
+ * ElevenLabs-style Orb (r3f + drei + a three.js shader).
  *
  * ONLY change vs. the source: the wrapper no longer falls back to Tailwind
  * utility classes ("relative h-full w-full"). It now accepts an optional

@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic"
  *   - state/destructive   → preview; run only with execute:true
  *
  * POST { command, execute? }        GET ?command=...  (read/simulate only)
- * This is what makes LUMEN reach "literally anything on KeeperHub" by voice.
+ * This is what makes PARALLAX reach "literally anything on KeeperHub" by voice.
  */
 
 const ON_CHAIN = new Set(["execute_transfer", "execute_contract_call", "execute_protocol_action", "execute_check_and_execute"])

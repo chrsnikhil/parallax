@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * Clay avatars — ported from ITHACA and "extracted" (Talking Tom style). The
+ * Clay avatars — chroma-keyed and "extracted" (Talking Tom style). The
  * clips render the character on a PURE BLACK background; we draw each frame to a
  * <canvas> and key the black out to transparent, so only the clay character
  * paints — it floats on the app with no box. A hidden <video> drives frames;

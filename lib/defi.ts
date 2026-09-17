@@ -435,7 +435,7 @@ export async function doSwap(input: {
   // safety: bound the USD notional
   const notional = await usdValue(kh, tin.priceKey, tin.symbol, input.amount)
   if (notional != null && notional > NOTIONAL_CAP_USD)
-    return { ok: false, broadcast: false, chain: chain.short, summary: `That swap is about $${notional.toFixed(0)}, over LUMEN's $${NOTIONAL_CAP_USD} safety cap.`, detail: "raise NOTIONAL_CAP_USD in lib/defi.ts" }
+    return { ok: false, broadcast: false, chain: chain.short, summary: `That swap is about $${notional.toFixed(0)}, over PARALLAX's $${NOTIONAL_CAP_USD} safety cap.`, detail: "raise NOTIONAL_CAP_USD in lib/defi.ts" }
 
   // read-only quote → expected output + slippage floor
   let amountOutMinimum = "0"

@@ -12,7 +12,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 /*
- * POST /api/automations  — the autonomous side of LUMEN.
+ * POST /api/automations  — the autonomous side of PARALLAX.
  * Actions:
  *   { action: "deploy",   name, description }  -> create a REAL KeeperHub workflow, returns id + link
  *   { action: "run",      id }                 -> execute_workflow + poll get_execution
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     await kh.init()
 
     if (body.action === "deploy") {
-      const name = body.name || "LUMEN: automation"
+      const name = body.name || "PARALLAX: automation"
       return NextResponse.json(await deploy(kh, name, body.description || ""))
     }
     if (body.action === "run") {
@@ -134,7 +134,7 @@ export async function GET(req: Request) {
   try {
     const kh = new KeeperHubClient()
     await kh.init()
-    const d = await deploy(kh, "LUMEN: yield watch (self-test)", "Read-only autonomy probe created by the LUMEN self-test")
+    const d = await deploy(kh, "PARALLAX: yield watch (self-test)", "Read-only autonomy probe created by the PARALLAX self-test")
     if (!d.ok || !d.id) return NextResponse.json({ step: "deploy", ...d })
     const r = await run(kh, d.id)
     return NextResponse.json({ ok: r.ok, deploy: { id: d.id, link: d.link }, run: r })

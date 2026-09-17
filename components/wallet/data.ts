@@ -1,4 +1,4 @@
-// Sample data for the LUMEN wallet views. Presentational only — no live wiring.
+// Sample data for the PARALLAX wallet views. Presentational only — no live wiring.
 
 export const BRAND = "Parallax"
 export const CAP = 50 // USDC delegation cap (Ledger-rooted MetaMask delegation)

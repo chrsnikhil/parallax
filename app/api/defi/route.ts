@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 export const maxDuration = 60
 
 /*
- * Multichain DeFi endpoint for LUMEN's UI + self-tests.
+ * Multichain DeFi endpoint for PARALLAX's UI + self-tests.
  *   GET                 → multichain portfolio (aggregated across chains)
  *   GET ?chain=8453     → balances on one chain
  *   POST {op:"price"}   → live Chainlink price (chain-independent)

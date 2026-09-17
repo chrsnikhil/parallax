@@ -2,7 +2,7 @@
 
 /*
  * Sign a mandate on a real Ledger Flex — BROWSER ONLY, using the Ledger Device
- * Management Kit (the same stack ITHACA armed on): device-management-kit +
+ * Management Kit: device-management-kit +
  * device-transport-kit-web-hid + device-signer-kit-ethereum. A hardware wallet
  * is reachable only from the browser (WebHID over USB-C), never a server.
  *

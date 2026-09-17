@@ -1,5 +1,5 @@
 /* ============================================================
-   LUMEN wallet — ElevenLabs UI theme, scoped to the wallet only.
+   PARALLAX wallet — ElevenLabs UI theme, scoped to the wallet only.
 
    HERO SAFETY (this file must never touch the hero):
    1. NO PREFLIGHT / NO GLOBAL RESET. We import only Tailwind's
@@ -1263,7 +1263,7 @@
 .kh-mini-btn.accent { color: var(--kh-primary); border-color: var(--kh-accent-line); }
 .kh-mini-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ---------------- clay avatar (ported from ITHACA) ---------------- */
+/* ---------------- clay avatar ---------------- */
 /* the extracted clay character floats on the app (no box) — Talking Tom style */
 .kh-hero {
   position: relative;

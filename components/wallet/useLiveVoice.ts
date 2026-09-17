@@ -1,7 +1,7 @@
 "use client"
 
 /*
- * LUMEN Live voice — ported from ITHACA (guardian/app/lib/useGuardianVoice.ts).
+ * PARALLAX Live voice.
  * Real Gemini Live: native-audio in AND out (the natural voice, not browser TTS),
  * AudioWorklet capture (16k) + gapless jitter-buffered playback (24k) with a
  * ScriptProcessor fallback, push-to-talk, barge-in. The Live model's one tool,

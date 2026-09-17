@@ -214,7 +214,7 @@ export async function POST(req: Request) {
     if (name === "build_workflow") {
       const desc = String(a.description || a.prompt || "")
       if (!desc) return NextResponse.json({ ok: false, detail: "description required" })
-      const nm = String(a.name || `LUMEN: ${desc.slice(0, 44)}`)
+      const nm = String(a.name || `PARALLAX: ${desc.slice(0, 44)}`)
 
       // best path: let KeeperHub's generator turn NL → a full workflow graph.
       // one shot only (retryColdStart:false) — if it's warming up we fall back to

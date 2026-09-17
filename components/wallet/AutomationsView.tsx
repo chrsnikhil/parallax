@@ -15,7 +15,7 @@ export default function AutomationsView() {
       const r = await fetch("/api/automations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "deploy", name: `LUMEN: ${a.title}`, description: a.trigger }),
+        body: JSON.stringify({ action: "deploy", name: `PARALLAX: ${a.title}`, description: a.trigger }),
       })
       const j = await r.json()
       if (j.ok && j.id) patch(a.id, { busy: false, workflowId: j.id, link: j.link })
