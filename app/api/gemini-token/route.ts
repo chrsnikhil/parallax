@@ -77,10 +77,10 @@ export async function POST(req: Request) {
           model: MODEL,
           config: {
             responseModalities: [Modality.AUDIO],
-            inputAudioTranscription: {},
-            outputAudioTranscription: {},
-            // Pin the session to English so transcripts render in Latin script,
-            // not a phonetic transliteration of the owner's accent.
+            // Force English transcription — an empty config auto-detects and can
+            // transliterate an accented English speaker into a non-Latin script.
+            inputAudioTranscription: { languageCodes: ["en-US"] },
+            outputAudioTranscription: { languageCodes: ["en-US"] },
             speechConfig: { languageCode: "en-US", voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
             // push-to-talk: automatic VAD OFF so the model never ends the turn on
             // its own — the client marks turns via activityStart/activityEnd. With
