@@ -317,6 +317,66 @@ export async function readAllBalances(owner = KH_WALLET, chainIds?: string[]): P
   return { wallet: owner, chains, holdings, totalUsd }
 }
 
+// ---- gas awareness ---------------------------------------------------------
+
+async function rpcCall(rpc: string, method: string, params: unknown[]): Promise<any> {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), 6000)
+  try {
+    const r = await fetch(rpc, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }),
+      cache: "no-store",
+      signal: ctrl.signal,
+    })
+    const j = await r.json()
+    return j?.result
+  } catch {
+    return undefined
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+export type GasInfo = { gasEth: number; gwei: number; usd: number | null; gasUsed: number }
+
+/** What a mined tx actually cost: gasUsed × effectiveGasPrice, in ETH + USD.
+ *  Polls briefly since the tx may still be confirming when we get the hash. */
+export async function gasForTx(hash: string, network?: string): Promise<GasInfo | null> {
+  const chain = resolveChain(network)
+  let receipt: any
+  for (let i = 0; i < 5; i++) {
+    receipt = await rpcCall(chain.rpc, "eth_getTransactionReceipt", [hash])
+    if (receipt && receipt.gasUsed) break
+    await new Promise((r) => setTimeout(r, 1200))
+  }
+  if (!receipt || !receipt.gasUsed) return null
+  const gasUsed = BigInt(receipt.gasUsed)
+  let priceWei: bigint | null = receipt.effectiveGasPrice ? BigInt(receipt.effectiveGasPrice) : null
+  if (priceWei == null) {
+    const tx = await rpcCall(chain.rpc, "eth_getTransactionByHash", [hash])
+    priceWei = tx?.gasPrice ? BigInt(tx.gasPrice) : null
+  }
+  if (priceWei == null) return null
+  const gasEth = Number(gasUsed * priceWei) / 1e18
+  const gwei = Number(priceWei) / 1e9
+  let usd: number | null = null
+  try {
+    const px = (await readPrice(chain.nativePriceKey || chain.native || "ETH")).price
+    if (px != null) usd = +(gasEth * px).toFixed(2)
+  } catch {
+    /* price feed optional */
+  }
+  return { gasEth: +gasEth.toFixed(6), gwei: +gwei.toFixed(2), usd, gasUsed: Number(gasUsed) }
+}
+
+/** A ready-to-speak phrase for a gas cost, e.g. " Gas: 0.00012 ETH (~$0.29)." */
+export function gasPhrase(g: GasInfo | null | undefined): string {
+  if (!g) return ""
+  return ` Gas: ${g.gasEth} ETH${g.usd != null ? ` (~$${g.usd})` : ""}.`
+}
+
 // ---- writes: swap (Uniswap V3) + bridge (Chainlink CCIP) -------------------
 
 export type ActionResult = {
@@ -327,6 +387,7 @@ export type ActionResult = {
   openUrl?: string
   summary: string
   detail?: string
+  gas?: GasInfo
 }
 
 const NOTIONAL_CAP_USD = 3000 // ~1 ETH+ per action; the KeeperHub daily cap is the per-day limit
@@ -418,7 +479,8 @@ export async function doSwap(input: {
     if (id) hash = txHashOf((await kh.pollDirect(id)).data)
   }
   if (execErr || !hash) return { ok: false, broadcast: false, chain: chain.short, summary: `Couldn't route ${input.amount} ${tin.symbol} → ${tout.symbol} on ${chain.short}.`, detail: execErr || exec.text }
-  return { ok: true, broadcast: true, chain: chain.short, tx: { hash, explorer: explorerTx(chain.id, hash) }, openUrl: explorerTx(chain.id, hash), summary: `Swapped ${input.amount} ${tin.symbol} → ${outStr} on ${chain.short}.` }
+  const gas = await gasForTx(hash, chain.id)
+  return { ok: true, broadcast: true, chain: chain.short, tx: { hash, explorer: explorerTx(chain.id, hash) }, openUrl: explorerTx(chain.id, hash), gas: gas || undefined, summary: `Swapped ${input.amount} ${tin.symbol} → ${outStr} on ${chain.short}.${gasPhrase(gas)}` }
 }
 
 // CCIP requires receiver as abi.encode(address) (32 bytes), fee paid in LINK (the
@@ -514,7 +576,8 @@ export async function doBridge(input: {
     if (id) hash = txHashOf((await kh.pollDirect(id)).data)
   }
   if (execErr || !hash) return { ok: false, broadcast: false, chain: src.short, summary: `CCIP send didn't go through from ${src.short} → ${dst.short}.`, detail: execErr || exec.text }
-  return { ok: true, broadcast: true, chain: src.short, tx: { hash, explorer: explorerTx(src.id, hash) }, openUrl: explorerTx(src.id, hash), summary: `Bridged ${amtHuman} CCIP-BnM from ${src.short} → ${dst.short} via Chainlink CCIP — track delivery at ccip.chain.link.` }
+  const gas = await gasForTx(hash, src.id)
+  return { ok: true, broadcast: true, chain: src.short, tx: { hash, explorer: explorerTx(src.id, hash) }, openUrl: explorerTx(src.id, hash), gas: gas || undefined, summary: `Bridged ${amtHuman} CCIP-BnM from ${src.short} → ${dst.short} via Chainlink CCIP — track delivery at ccip.chain.link.${gasPhrase(gas)}` }
 }
 
 /** Protocol interaction: wrap native ETH into WETH via the canonical WETH9
@@ -534,7 +597,8 @@ export async function wrapEth(input: { amountEth: string; network?: string; exec
     if (id) hash = txHashOf((await kh.pollDirect(id)).data)
   }
   if (err || !hash) return { ok: false, broadcast: false, chain: chain.short, summary: `Couldn't wrap ${amt} ETH on ${chain.short}.`, detail: err || exec.text }
-  return { ok: true, broadcast: true, chain: chain.short, tx: { hash, explorer: explorerTx(chain.id, hash) }, openUrl: explorerTx(chain.id, hash), summary: `Wrapped ${amt} ETH into WETH on ${chain.short} — a real interaction with the WETH protocol.` }
+  const gas = await gasForTx(hash, chain.id)
+  return { ok: true, broadcast: true, chain: chain.short, tx: { hash, explorer: explorerTx(chain.id, hash) }, openUrl: explorerTx(chain.id, hash), gas: gas || undefined, summary: `Wrapped ${amt} ETH into WETH on ${chain.short} — a real interaction with the WETH protocol.${gasPhrase(gas)}` }
 }
 
 /** Fund the managed wallet with CCIP-BnM (the CCIP test token) so a real bridge
@@ -547,4 +611,100 @@ export async function dripCcipBnm(network?: string): Promise<ActionResult> {
   const hash = txHashOf(exec.data)
   if (err || !hash) return { ok: false, broadcast: false, chain: chain.short, summary: `Couldn't drip CCIP-BnM on ${chain.short}.`, detail: err || exec.text }
   return { ok: true, broadcast: true, chain: chain.short, tx: { hash, explorer: explorerTx(chain.id, hash) }, openUrl: explorerTx(chain.id, hash), summary: `Dripped CCIP-BnM test tokens to the wallet on ${chain.short}.` }
+}
+
+// ---- yield: supply into Aave V3 (a real, interest-earning position) ---------
+// Reality on Sepolia (verified on-chain): the stablecoin lending markets (USDC,
+// DAI) are supply-capped and FULL, so a supply of them reverts with Aave error
+// 51 (SUPPLY_CAP_EXCEEDED). LINK's market is uncapped + active and reliably
+// accepts supplies. So "invest my dollars" routes the deposit to the LINK market
+// (sized to the requested USD notional) — a genuinely smart, cap-aware move that
+// also fits "keep the yield good". execute_contract_call broadcasts writes (same
+// path the CCIP bridge uses), so mint→approve→supply is fully real on-chain.
+const AAVE_V3_SEPOLIA = {
+  pool: "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951",
+  faucet: "0xC959483DBa39aa9E78757139af0e9a2EDEb3f42D",
+  usdc: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
+  link: "0xf8Fb3713D459D7C1018BD0A49D19b4C44290EBE5", // uncapped + active reserve
+}
+const MAX_UINT = "115792089237316195423570985008687907853269984665640564039457584007913129639935"
+
+async function aaveApy(kh: KeeperHubClient, asset: string): Promise<number | undefined> {
+  try {
+    const rd = await kh.callTool("execute_contract_call", { chain_id: SEPOLIA, contract_address: AAVE_V3_SEPOLIA.pool, function_name: "getReserveData", function_args: JSON.stringify([asset]) })
+    const rate = (rd.data as any)?.result?.currentLiquidityRate ?? (rd.data as any)?.currentLiquidityRate
+    if (rate) return +((Number(BigInt(String(rate))) / 1e27) * 100).toFixed(2) // ray (1e27) → %
+  } catch {
+    /* apy is a nice-to-have */
+  }
+  return undefined
+}
+
+async function erc20Allowance(kh: KeeperHubClient, chainId: string, token: string, owner: string, spender: string): Promise<number> {
+  try {
+    const r = await kh.callTool("execute_contract_call", { chain_id: chainId, contract_address: token, function_name: "allowance", function_args: JSON.stringify([owner, spender]) })
+    const raw = scalarOf(r.data)
+    return raw != null ? Number(BigInt(raw)) : 0
+  } catch {
+    return 0
+  }
+}
+
+export type InvestResult = ActionResult & { apyPct?: number; asset?: string; usd?: number; qty?: number }
+
+/** Real yield deposit into Aave V3. The requested USD amount is supplied into the
+ *  uncapped LINK market (Sepolia stable markets are at capacity). Preview = quote. */
+export async function investYield(input: { amountUsdc?: string; execute?: boolean }): Promise<InvestResult> {
+  const chain = resolveChain("sepolia")
+  const kh = await new KeeperHubClient().init()
+  const usd = input.amountUsdc && Number(input.amountUsdc) > 0 ? Number(input.amountUsdc) : 50
+  const symbol = "LINK"
+  const asset = AAVE_V3_SEPOLIA.link
+  const decimals = 18
+
+  const [apyPct, linkPx] = await Promise.all([aaveApy(kh, asset), readPrice("LINK", kh).then((p) => p.price)])
+  const qty = linkPx && linkPx > 0 ? +(usd / linkPx).toFixed(4) : usd // ~USD worth of LINK
+  const amount = BigInt(Math.round(qty * 10 ** decimals)).toString()
+
+  if (!input.execute) {
+    return { ok: true, broadcast: false, chain: chain.short, apyPct, asset: symbol, usd, qty, summary: `Invest preview: USDC's Aave market is at capacity on ${chain.short}, so I'd put your ~$${usd} (about ${qty} LINK) into Aave's uncapped LINK market${apyPct != null ? ` at ~${apyPct}% APY` : ""}. Say "invest" to deposit.` }
+  }
+
+  // ensure the wallet holds enough of the asset (mint from the Aave faucet if short)
+  let bal = await erc20Balance(kh, chain.id, { symbol, address: asset, decimals }, KH_WALLET)
+  if (bal < qty) {
+    await kh.callTool("execute_contract_call", { chain_id: chain.id, contract_address: AAVE_V3_SEPOLIA.faucet, function_name: "mint", function_args: JSON.stringify([asset, KH_WALLET, amount]) })
+    bal = await erc20Balance(kh, chain.id, { symbol, address: asset, decimals }, KH_WALLET)
+    if (bal < qty) return { ok: false, broadcast: false, chain: chain.short, apyPct, asset: symbol, summary: `Couldn't obtain enough ${symbol} to invest ~$${usd}.` }
+  }
+
+  // approve the pool once (MAX so any later top-up needs no re-approve), then supply
+  const allowance = await erc20Allowance(kh, chain.id, asset, KH_WALLET, AAVE_V3_SEPOLIA.pool)
+  if (allowance < qty * 10 ** decimals) {
+    await kh.callTool("execute_contract_call", { chain_id: chain.id, contract_address: asset, function_name: "approve", function_args: JSON.stringify([AAVE_V3_SEPOLIA.pool, MAX_UINT]) })
+  }
+  const sup = await kh.callTool("execute_protocol_action", { actionType: "aave-v3/supply", params: { network: chain.id, asset, amount, onBehalfOf: KH_WALLET } })
+  const execErr = simFailure(sup)
+  let hash = txHashOf(sup.data)
+  if (!hash && !execErr) {
+    const id = executionIdOf(sup.data)
+    if (id) hash = txHashOf((await kh.pollDirect(id)).data)
+  }
+  if (execErr || !hash)
+    return { ok: false, broadcast: false, chain: chain.short, apyPct, asset: symbol, summary: `Couldn't supply your ~$${usd} into Aave V3 on ${chain.short}.`, detail: execErr || sup.text }
+
+  const gas = await gasForTx(hash, chain.id)
+  return {
+    ok: true,
+    broadcast: true,
+    chain: chain.short,
+    tx: { hash, explorer: explorerTx(chain.id, hash) },
+    openUrl: explorerTx(chain.id, hash),
+    apyPct,
+    asset: symbol,
+    usd,
+    qty,
+    gas: gas || undefined,
+    summary: `Invested your ~$${usd} (${qty} LINK) into Aave V3 on ${chain.short}${apyPct != null ? `, now earning ~${apyPct}% APY` : ""} — USDC's market was at capacity, so I routed to the uncapped LINK market.${gasPhrase(gas)}`,
+  }
 }

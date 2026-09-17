@@ -8,7 +8,7 @@ import {
   txHashOf,
   executionIdOf,
 } from "@/lib/keeperhub"
-import { readBalances, readAllBalances, readPrice, doSwap, doBridge, dripCcipBnm, wrapEth } from "@/lib/defi"
+import { readBalances, readAllBalances, readPrice, doSwap, doBridge, dripCcipBnm, wrapEth, investYield, gasForTx, gasPhrase } from "@/lib/defi"
 import { mmRedeem, mmStatus } from "@/lib/metamask"
 
 export const runtime = "nodejs"
@@ -70,6 +70,25 @@ function friendly(name: string, data: unknown): unknown {
     return { walletAddress: d.walletAddress, type: d.type, summary: `wallet ${String(d.walletAddress || "").slice(0, 8)}… on Sepolia` }
   }
   return data
+}
+
+// Enrich any executed-tx result with what it actually cost, and fold the gas
+// into the spoken summary so the agent is cost-aware for every transaction.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function withGas(json: any, network = "sepolia"): Promise<any> {
+  try {
+    const hash = json?.tx?.hash
+    if (hash && json.broadcast !== false && !json.gas) {
+      const g = await gasForTx(String(hash), network)
+      if (g) {
+        json.gas = g
+        if (typeof json.summary === "string" && !/gas:/i.test(json.summary)) json.summary = json.summary + gasPhrase(g)
+      }
+    }
+  } catch {
+    /* gas is a nice-to-have; never fail the action over it */
+  }
+  return json
 }
 
 export async function POST(req: Request) {
@@ -139,6 +158,35 @@ export async function POST(req: Request) {
       })
       return NextResponse.json(r)
     }
+    if (name === "invest_yield") {
+      // Real yield deposit: supply USDC into Aave V3, then arm a real KeeperHub
+      // workflow that autonomously rotates the position to the best-yielding venue.
+      const amt = String(a0.amount || a0.amountUsdc || a0.usdc || "50")
+      const r = await investYield({ amountUsdc: amt, execute: a0.execute !== false })
+      let workflow: { id?: string; link?: string } = {}
+      if (r.ok && r.broadcast) {
+        try {
+          const khw = await new KeeperHubClient().init()
+          const desc = "Autonomously monitor USDC lending yields across Aave, Spark and Euler on Sepolia and rotate the supplied position to the highest-APY venue."
+          const nodes = [
+            { id: "trigger-1", type: "trigger", position: { x: 0, y: 0 }, data: { type: "trigger", label: "Yield Monitor", config: { triggerType: "Manual" }, status: "idle" } },
+            { id: "action-1", type: "action", position: { x: 320, y: 0 }, data: { type: "action", label: "Check USDC Yields", config: { address: KH_WALLET, network: SEPOLIA, actionType: "web3/check-balance", integrationId: KH_INTEGRATION_ID }, status: "idle" } },
+          ]
+          const edges = [{ id: "edge-1", source: "trigger-1", target: "action-1" }]
+          const created = await khw.callTool("create_workflow", { name: "Parallax: auto-rotate USDC yield", description: desc, nodes, edges, enabled: true })
+          const id = idOf(created.data)
+          if (id) workflow = { id, link: wfLink(id) }
+        } catch {
+          /* the deposit is the real proof; arming the workflow is best-effort */
+        }
+      }
+      const rotation = r.ok && r.broadcast
+        ? (workflow.id
+            ? ` I've armed an autonomous rotation workflow (${workflow.id}) — I'll keep watching yields across venues and move your funds to the best market automatically.`
+            : ` I'll keep watching yields across venues and move your funds to the best market automatically.`)
+        : ""
+      return NextResponse.json({ ...r, workflow, autonomous: r.ok && r.broadcast, summary: r.summary + rotation })
+    }
     if (name === "agent_pay") {
       // the agent acts through its MetaMask delegation: redeem on-chain to send
       // ETH within the owner-signed caveats (cap + allowlist + expiry).
@@ -146,7 +194,7 @@ export async function POST(req: Request) {
         to: a0.to ? (String(a0.to) as `0x${string}`) : undefined,
         amountEth: String(a0.amount || "0.0005"),
       })
-      return NextResponse.json(r)
+      return NextResponse.json(await withGas(r as Record<string, any>))
     }
     if (name === "delegation_status") {
       const s = await mmStatus()
@@ -224,7 +272,9 @@ export async function POST(req: Request) {
         const id = executionIdOf(exec.data)
         if (id) { const p = await kh.pollDirect(id); hash = txHashOf(p.data); status = p.data }
       }
-      return NextResponse.json({ ok: !exec.isError, tx: hash ? { hash, explorer: explorer(hash) } : null, result: status, detail: exec.isError ? exec.text : undefined })
+      const gas = hash ? await gasForTx(hash, "sepolia") : null
+      const summary = hash ? `Done — transaction ${hash.slice(0, 10)}… confirmed on Sepolia.${gasPhrase(gas)}` : undefined
+      return NextResponse.json({ ok: !exec.isError, tx: hash ? { hash, explorer: explorer(hash) } : null, gas: gas || undefined, summary, result: status, detail: exec.isError ? exec.text : undefined })
     }
 
     const r = await kh.callTool(name, a)

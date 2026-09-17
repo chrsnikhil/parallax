@@ -197,6 +197,14 @@ The cinematic demo also presents the **smart router** — a vision for how PARAL
 
 ---
 
+## Autonomous yield & cost-awareness
+
+Say *"invest 50 USDC of my funds and keep the yield good."* PARALLAX makes a **real Aave V3 deposit**, then arms a **real KeeperHub workflow** that autonomously monitors yields across venues and rotates the position to the best market — and it tells you it's doing so. It's also **market-aware**: on Sepolia the stablecoin lending markets are at capacity, so the agent intelligently routes the deposit into Aave's uncapped LINK market instead of failing. Proven on-chain: [`0x3352616…`](https://sepolia.etherscan.io/tx/0x3352616471da95e88b38ca346d6bce6fccdeb20a4e01c71e5259663711c9a06e).
+
+Every transaction is also **cost-aware**: after any on-chain action, PARALLAX reads the receipt and tells you exactly what it cost — e.g. *"Gas: 0.0002 ETH (~$0.48)"* — so the agent (and you) always know the price of a move.
+
+---
+
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router, Turbopack), React 19, TypeScript

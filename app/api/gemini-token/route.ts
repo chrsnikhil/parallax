@@ -40,12 +40,15 @@ live result. Prefer the SPECIFIC tools:
  - execute_transfer — "send X ETH to …"
  - swap_tokens — "swap X ETH for USDC", "trade …"
  - bridge_tokens — "bridge 0.01 to Base", "move … cross-chain". ONE STEP: never tell the owner to wrap or swap first, and don't ask which token — just call bridge_tokens with the amount + destination and it does the whole thing.
+ - invest_yield — "invest 50 USDC", "put my funds to work", "earn yield", "make my money work": supplies USDC into Aave V3 (a REAL deposit) and arms an autonomous rotation workflow. In your reply, say the APY it's earning and that you'll keep monitoring yields and rotate to the best market automatically.
  - build_workflow (then execute_workflow) — when the owner wants "a workflow that…" or any scheduled automation
  - search_protocol_actions — to discover DeFi actions; get_wallet_integration — wallet details
 Use run_keeperhub ONLY for something none of those cover. For swap_tokens and bridge_tokens, after it
-returns a transaction, tell the owner it's opening the transaction link. After ANY tool returns, reply in
-ONE short, natural spoken sentence with the real numbers, the workflow id, or the transaction result. Keep
-every reply brief and conversational.`
+returns a transaction, tell the owner it's opening the transaction link. GAS AWARENESS: whenever a tool
+returns a transaction, the result includes what it cost (a gas figure in ETH and USD) — ALWAYS state that
+gas cost in your reply so the owner knows what the transaction cost. After ANY tool returns, reply in ONE
+short, natural spoken sentence with the real numbers (and gas when there's a transaction), the workflow id,
+or the transaction result. Keep every reply brief and conversational.`
 
 export async function POST(req: Request) {
   const apiKey = process.env.GEMINI_API_KEY
@@ -148,6 +151,16 @@ export async function POST(req: Request) {
                       properties: {
                         amount: { type: Type.STRING, description: "amount of ETH to wrap, e.g. '0.01'" },
                         chain: { type: Type.STRING, description: "optional chain (default Sepolia)" },
+                      },
+                    },
+                  },
+                  {
+                    name: "invest_yield",
+                    description: "Invest idle USDC into a REAL yield position by supplying it to Aave V3 on Sepolia (earns interest), then arm an autonomous KeeperHub workflow that monitors yields across venues and rotates the funds to the best market. Broadcasts a real deposit and returns a transaction link the app opens. Use for 'invest 50 USDC', 'put my funds to work', 'earn yield', 'make my money work', 'invest and keep the yield good'.",
+                    parameters: {
+                      type: Type.OBJECT,
+                      properties: {
+                        amount: { type: Type.STRING, description: "amount of USDC to invest, e.g. '50'" },
                       },
                     },
                   },

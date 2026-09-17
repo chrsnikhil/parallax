@@ -108,6 +108,13 @@ export async function GET(req: Request) {
       ok: (j) => !!j.token,
       summary: (j) => `minted ${j.model} · voice ${j.voice}`,
     }),
+
+    // 10. Autonomous yield — read-only invest preview (Aave routing + live APY)
+    check("invest_preview", "/api/tools", {
+      init: { ...post("i"), body: body({ name: "invest_yield", args: { amount: "50", execute: false } }) },
+      ok: (j) => j.ok && j.broadcast === false && j.apyPct != null,
+      summary: (j) => j.summary,
+    }),
   ])
 
   const allOk = Object.values(checks).every((c) => c.ok)
