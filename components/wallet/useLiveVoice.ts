@@ -13,7 +13,7 @@
 import { useCallback, useRef, useState } from "react"
 import { GoogleGenAI } from "@google/genai"
 
-import { openTxWindow, txUrlOf } from "@/components/wallet/txlink"
+import { openTxWindow, txUrlOf, wfUrlOf } from "@/components/wallet/txlink"
 
 export type LiveState = "idle" | "connecting" | "ready" | "listening" | "thinking" | "talking"
 export type LiveVoice = ReturnType<typeof useLiveVoice>
@@ -161,12 +161,17 @@ export function useLiveVoice(opts?: {
       response = { ok: false, error: e instanceof Error ? e.message : String(e) }
     }
     console.log("[voice] tool result:", fc.name, response)
-    // if the tool moved funds (swap/bridge/transfer), open the tx link in a window
+    // if the tool moved funds, open the on-chain tx AND (when the action created
+    // one, e.g. an autonomous invest) the KeeperHub workflow, in their own windows.
     const url = txUrlOf(response)
+    const wfUrl = wfUrlOf(response)
+    if (wfUrl) openTxWindow(wfUrl)
     if (url) {
       const label = fc.name === "swap_tokens" ? "Swap transaction" : fc.name === "bridge_tokens" ? "Bridge transaction" : "Transaction"
       openTxWindow(url)
       setLastLink({ url, label })
+    } else if (wfUrl) {
+      setLastLink({ url: wfUrl, label: "KeeperHub workflow" })
     }
     try { optsRef.current?.onTool?.(fc.name, fc.args || {}, response) } catch {}
     sessionRef.current?.sendToolResponse({ functionResponses: [{ id: fc.id, name: fc.name, response: response as Record<string, unknown> }] })

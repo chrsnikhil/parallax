@@ -36,9 +36,10 @@ export async function GET(req: Request) {
   async function check(name: string, path: string, opts?: { init?: RequestInit; ok?: (j: any) => boolean; summary?: (j: any) => string }) {
     const t0 = Date.now()
     try {
-      // Hard per-check cap: a single slow route (e.g. multichain RPCs) must never
-      // hang the whole sweep past the serverless function limit.
-      const r = await fetch(origin + path, { cache: "no-store", signal: AbortSignal.timeout(15000), ...(opts?.init || {}) })
+      // Hard per-check cap: a single slow route (e.g. multichain RPCs or a cold
+      // serverless start) must never hang the whole sweep past the function limit.
+      // Checks run in parallel, so this stays well under maxDuration (60s).
+      const r = await fetch(origin + path, { cache: "no-store", signal: AbortSignal.timeout(30000), ...(opts?.init || {}) })
       const j = await r.json()
       const ok = opts?.ok ? opts.ok(j) : r.ok && j.ok !== false
       checks[name] = { ok, ms: Date.now() - t0, summary: opts?.summary ? opts.summary(j) : undefined, error: ok ? undefined : j.error || j.detail || `HTTP ${r.status}` }
@@ -49,73 +50,85 @@ export async function GET(req: Request) {
   const post = (_label?: string): RequestInit => ({ method: "POST", headers: { "Content-Type": "application/json" } })
   const body = (o: unknown) => JSON.stringify(o)
 
-  // Run every check concurrently — each writes its own key, so there's no race,
-  // and the total wall-time is the slowest single check instead of the sum.
-  await Promise.all([
+  // Run the checks with a small concurrency cap. Firing all 10 at once cold-starts
+  // 10 serverless functions that then hammer KeeperHub simultaneously — that
+  // contention was the flakiness. Batches of 3 keep it fast but reliable.
+  async function runPool(jobs: Array<() => Promise<void>>, limit: number) {
+    let idx = 0
+    const worker = async () => {
+      while (idx < jobs.length) {
+        const j = jobs[idx++]
+        await j()
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(limit, jobs.length) }, worker))
+  }
+
+  await runPool([
     // 1. KeeperHub + chain: real dashboard data
-    check("dashboard", "/api/dashboard", {
+    () => check("dashboard", "/api/dashboard", {
       summary: (j) => `balance ${j.balanceEth?.toFixed?.(4)} ETH · cap ${j.spendCap?.capEth} ETH/day · ${j.executions?.length ?? 0} execs`,
     }),
 
     // 2. Multichain portfolio (native + priced ERC20s)
-    check("portfolio", "/api/defi", {
+    () => check("portfolio", "/api/defi", {
       summary: (j) => `$${j.totalUsd} across ${j.chains?.length ?? 0} chains · ${j.holdings?.length ?? 0} holdings`,
     }),
 
     // 3. Live Chainlink price
-    check("price_oracle", "/api/tools", {
+    () => check("price_oracle", "/api/tools", {
       init: { ...post("p"), body: body({ name: "get_price", args: { symbol: "ETH" } }) },
       ok: (j) => j.ok && j.price != null,
       summary: (j) => j.summary,
     }),
 
     // 4. Swap — read-only preview (Uniswap quote)
-    check("swap_preview", "/api/tools", {
+    () => check("swap_preview", "/api/tools", {
       init: { ...post("s"), body: body({ name: "swap_tokens", args: { fromToken: "ETH", toToken: "USDC", amount: "0.001", execute: false } }) },
       ok: (j) => j.ok && j.broadcast === false,
       summary: (j) => j.summary,
     }),
 
     // 5. Bridge — read-only preview (CCIP fee quote)
-    check("bridge_preview", "/api/tools", {
+    () => check("bridge_preview", "/api/tools", {
       init: { ...post("b"), body: body({ name: "bridge_tokens", args: { token: "BnM", amount: "0.01", toChain: "base sepolia" } }) },
       ok: (j) => j.ok && j.broadcast === false,
       summary: (j) => j.summary,
     }),
 
     // 6. Protocol — read-only wrap preview (WETH)
-    check("protocol_wrap_preview", "/api/tools", {
+    () => check("protocol_wrap_preview", "/api/tools", {
       init: { ...post("w"), body: body({ name: "wrap_eth", args: { amount: "0.001", execute: false } }) },
       ok: (j) => j.ok && j.broadcast === false,
       summary: (j) => j.summary,
     }),
 
     // 7. MetaMask smart account (delegation base)
-    check("metamask_account", "/api/metamask/delegation", {
+    () => check("metamask_account", "/api/metamask/delegation", {
       ok: (j) => j.ok && j.configured,
       summary: (j) => `SA ${j.smartAccount?.slice(0, 8)}… · deployed ${j.deployed} · ${j.balances?.smartAccountEth} ETH`,
     }),
 
     // 8. Mandate catalog + Ledger context (Flex owner)
-    check("mandate", "/api/mandate", {
+    () => check("mandate", "/api/mandate", {
       ok: (j) => j.ok && (j.catalog?.protocols?.length ?? 0) > 0 && !!j.context?.flexOwner,
       summary: (j) => `${j.catalog?.protocols?.length} protocols · ${j.catalog?.actions?.length} actions · Flex ${j.context?.flexOwner?.slice(0, 8)}…`,
     }),
 
     // 9. Gemini Live voice token (native-audio agent)
-    check("gemini_voice_token", "/api/gemini-token", {
+    () => check("gemini_voice_token", "/api/gemini-token", {
       init: { ...post("g"), body: body({ character: "tv" }) },
       ok: (j) => !!j.token,
       summary: (j) => `minted ${j.model} · voice ${j.voice}`,
     }),
 
     // 10. Autonomous yield — read-only invest preview (Aave routing + live APY)
-    check("invest_preview", "/api/tools", {
+    () => check("invest_preview", "/api/tools", {
       init: { ...post("i"), body: body({ name: "invest_yield", args: { amount: "50", execute: false } }) },
       ok: (j) => j.ok && j.broadcast === false && j.apyPct != null,
       summary: (j) => j.summary,
     }),
-  ])
+  ], 3)
 
   const allOk = Object.values(checks).every((c) => c.ok)
   return NextResponse.json(

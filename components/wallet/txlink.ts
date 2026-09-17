@@ -24,3 +24,12 @@ export function txUrlOf(res: unknown): string | undefined {
   if (typeof r.link === "string" && /etherscan|explorer/.test(r.link)) return r.link
   return undefined
 }
+
+/** Dig a KeeperHub workflow URL out of a tool response (invest / build_workflow). */
+export function wfUrlOf(res: unknown): string | undefined {
+  if (!res || typeof res !== "object") return undefined
+  const r = res as Record<string, any>
+  if (r.workflow && typeof r.workflow.link === "string") return r.workflow.link
+  if (typeof r.link === "string" && /keeperhub|workflows/.test(r.link)) return r.link
+  return undefined
+}
