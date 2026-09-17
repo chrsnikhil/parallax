@@ -340,7 +340,6 @@ export function useLiveVoice(opts?: {
         nextStartRef.current = 0
         uTurnRef.current = ""
         setUserText("")
-        try { session.sendRealtimeInput({ activityStart: {} }) } catch {}
         setState("listening")
         console.log("[voice] held-turn started (mic ready)")
       }
@@ -359,14 +358,13 @@ export function useLiveVoice(opts?: {
     if (talkTimerRef.current) { clearTimeout(talkTimerRef.current); talkTimerRef.current = null }
     uTurnRef.current = ""
     setUserText("")
-    try { sessionRef.current?.sendRealtimeInput({ activityStart: {} }) } catch {}
     setState("listening")
   }, [])
 
   const stopTalk = useCallback(() => {
     if (!holdingRef.current) return
     holdingRef.current = false
-    try { sessionRef.current?.sendRealtimeInput({ activityEnd: {} }) } catch {}
+    try { sessionRef.current?.sendRealtimeInput({ audioStreamEnd: true }) } catch {}
     setState("thinking")
     // watchdog: never hang on "thinking" — recover if the model doesn't respond
     if (thinkTimerRef.current) clearTimeout(thinkTimerRef.current)

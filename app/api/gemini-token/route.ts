@@ -86,12 +86,10 @@ export async function POST(req: Request) {
             inputAudioTranscription: { languageCodes: ["en-US"] },
             outputAudioTranscription: { languageCodes: ["en-US"] },
             speechConfig: { languageCode: "en-US", voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
-            // push-to-talk: automatic VAD OFF so the model never ends the turn on
-            // its own — the client marks turns via activityStart/activityEnd. With
-            // disabled:true the server waits for our explicit activityEnd (release).
-            realtimeInputConfig: {
-              automaticActivityDetection: { disabled: true },
-            },
+            // Push-to-talk uses AUTOMATIC VAD plus mic gating on the client: audio
+            // is streamed only while the key or button is held, and the client sends
+            // audioStreamEnd on release. This is reliable across Live models. Manual
+            // VAD (activityStart/activityEnd) is not honored by the half-cascade model.
             tools: [
               {
                 functionDeclarations: [
