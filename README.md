@@ -12,7 +12,7 @@ A Ledger Flex signature authorizes it. Every action is a **real, verifiable on-c
 
 `Gemini Live (native voice)` · `KeeperHub MCP` · `MetaMask Delegation Toolkit` · `Ledger Flex` · `Aave V3` · `Uniswap V3` · `Chainlink CCIP` · `Multichain` · `Next.js 16`
 
-**▶ [Live app](https://parallax-seven-mu.vercel.app) · [Demo video](ADD_YOUTUBE_LINK) · [Self-test the whole stack](https://parallax-seven-mu.vercel.app/api/selftest)**
+**▶ [Live app](https://parallax-seven-mu.vercel.app) · [Demo video](https://www.youtube.com/watch?v=BBP6N9mG5Ds) · [Self-test the whole stack](https://parallax-seven-mu.vercel.app/api/selftest)**
 
 </div>
 
@@ -23,7 +23,7 @@ A Ledger Flex signature authorizes it. Every action is a **real, verifiable on-c
 | Requirement | Link |
 |---|---|
 | **Source code** | https://github.com/chrsnikhil/parallax |
-| **Demo video** | **[▶ Watch the demo](ADD_YOUTUBE_LINK)** |
+| **Demo video** | **[▶ Watch the demo](https://www.youtube.com/watch?v=BBP6N9mG5Ds)** |
 | **A transaction executed through KeeperHub** | [`0xde473184…1408c3` (Uniswap swap)](https://sepolia.etherscan.io/tx/0xde4731840319b8f7b57fce6dc4b6fbc8d3abcdb8dce35cd15a4f1578aa1408c3) |
 | **Live deployment** | https://parallax-seven-mu.vercel.app |
 | Network | Sepolia (testnet) |
