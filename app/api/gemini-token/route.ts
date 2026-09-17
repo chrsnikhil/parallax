@@ -15,11 +15,13 @@ import { GoogleGenAI, Modality, Type } from "@google/genai"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-// Half-cascade Live model: uses a discrete STT that HONORS inputAudioTranscription
-// languageCodes, so the transcript stays English. The native-audio model
-// (gemini-2.5-flash-native-audio) ignores the hint and transliterates the
-// owner's accent into other scripts (known Google limitation).
-const MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-live-2.5-flash-preview"
+// Live model. gemini-3.1-flash-live-preview is a VALID bidi audio model on this key
+// that HONORS inputAudioTranscription languageCodes (transcript stays English) and
+// works with the client's automatic-VAD push-to-talk. Verified server-side: it
+// transcribes English audio input and replies. (The native-audio model transliterates
+// an accented English speaker into other scripts; gemini-live-2.5-flash-preview does
+// not exist for bidiGenerateContent on this key, which silently broke the voice.)
+const MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-3.1-flash-live-preview"
 
 // A distinct Gemini prebuilt voice per clay character.
 const VOICES: Record<string, string> = {
