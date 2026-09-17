@@ -176,6 +176,8 @@ export async function POST(req: Request) {
           const created = await khw.callTool("create_workflow", { name: "Parallax: auto-rotate USDC yield", description: desc, nodes, edges, enabled: true })
           const id = idOf(created.data)
           if (id) workflow = { id, link: wfLink(id) }
+          // log server-side so the workflow link is recoverable from deployment logs
+          console.log("[invest_yield] workflow created:", id, workflow.link, "| deposit tx:", r.tx?.hash)
         } catch {
           /* the deposit is the real proof; arming the workflow is best-effort */
         }
