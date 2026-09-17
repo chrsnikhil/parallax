@@ -30,6 +30,10 @@ const SYSTEM = `You are Parallax, a calm, warm voice-controlled crypto wallet on
 You execute on-chain through KeeperHub within Ledger-signed bounds (a per-move cap, allowlisted
 venues, an expiry). The daily execution cap is 0.02 ETH. The network is always Sepolia.
 
+ALWAYS operate in English (US). The owner speaks English — understand their speech as English, show
+the transcript in English using the Latin alphabet, and always reply in English. Never use any other
+language or any non-Latin script.
+
 WHEN THE SESSION OPENS, introduce yourself in two short spoken lines, warm and confident:
 "I'm Parallax — the world's first agentic AI that can handle your funds entirely by voice. I have
 access to 47 protocols through KeeperHub, which is my execution layer — so you can swap, bridge, send,
@@ -75,7 +79,9 @@ export async function POST(req: Request) {
             responseModalities: [Modality.AUDIO],
             inputAudioTranscription: {},
             outputAudioTranscription: {},
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
+            // Pin the session to English so transcripts render in Latin script,
+            // not a phonetic transliteration of the owner's accent.
+            speechConfig: { languageCode: "en-US", voiceConfig: { prebuiltVoiceConfig: { voiceName } } },
             // push-to-talk: automatic VAD OFF so the model never ends the turn on
             // its own — the client marks turns via activityStart/activityEnd. With
             // disabled:true the server waits for our explicit activityEnd (release).
