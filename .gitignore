@@ -13,8 +13,8 @@ out/
 # throwaway debug frames
 _debug-shots/
 
-# heavy raw source video (kept: parallax-demo/assets/livedemo.mp4, the compressed one used by the deck)
-parallax-demo/assets/livedemo_hevc_orig.mp4
+# demo deck — local only, never committed
+parallax-demo/
 .vercel
 .env*
 

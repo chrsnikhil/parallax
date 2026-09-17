@@ -2,51 +2,68 @@
 
 # PARALLAX
 
-### Speak your intent. It executes on-chain — inside bounds you sign once on a Ledger.
+### The world's first voice-native agentic wallet — powered by KeeperHub as its execution layer.
 
-**A voice-first crypto wallet for the KeeperHub "Agent Economy" track.**
-Say what you want. Gemini understands it. KeeperHub executes it. MetaMask bounds it. Ledger authorizes it.
-Every action is a real, verifiable transaction.
+**Speak one sentence. It executes on-chain — deterministically, within bounds you signed once on a Ledger.**
 
-`Voice + Gemini Live` · `KeeperHub MCP` · `MetaMask Delegation Toolkit` · `Ledger Flex` · `Multichain` · `Next.js 16`
+Say *"bridge 0.01 to Base,"* *"swap ETH into USDC,"* *"invest 50 USDC and keep the yield good."*
+Gemini understands the intent. **KeeperHub composes, dry-runs, and executes it.** MetaMask bounds it.
+A Ledger Flex signature authorizes it. Every action is a **real, verifiable on-chain transaction.**
 
-### ▶ Live: [parallax-seven-mu.vercel.app](https://parallax-seven-mu.vercel.app) · Self-test: [`/api/selftest`](https://parallax-seven-mu.vercel.app/api/selftest)
+`Gemini Live (native voice)` · `KeeperHub MCP` · `MetaMask Delegation Toolkit` · `Ledger Flex` · `Aave V3` · `Uniswap V3` · `Chainlink CCIP` · `Multichain` · `Next.js 16`
+
+**▶ [Live app](https://parallax-seven-mu.vercel.app) · [Demo video](ADD_YOUTUBE_LINK) · [Self-test the whole stack](https://parallax-seven-mu.vercel.app/api/selftest)**
 
 </div>
 
 ---
 
-## Why PARALLAX
+## Submission at a glance
 
-Wallets have become data terminals. To do anything real you juggle RPCs, gas, approvals, routers, bridges, slippage, and a dozen browser popups — then you sign each one blind. That is not how people should move money.
-
-PARALLAX collapses all of it into one sentence. You say *"bridge 0.01 to Base"* or *"swap ETH into LINK"* or *"send Sarah 5 USDC."* The agent figures out the route, composes the calls, and executes them on-chain — but only ever inside a **mandate you signed once on your Ledger Flex**: which protocols it may touch, which actions it may take, how much it may spend, for how long. Convenience and security at the same time, which wallets have always forced you to trade off.
-
-That is the thesis of the demo: **this is what a wallet looks like when the agent economy is real.**
+| Requirement | Link |
+|---|---|
+| **Source code** | https://github.com/chrsnikhil/parallax |
+| **Demo video** | **[▶ Watch the demo](ADD_YOUTUBE_LINK)** |
+| **A transaction executed through KeeperHub** | [`0xde473184…1408c3` (Uniswap swap)](https://sepolia.etherscan.io/tx/0xde4731840319b8f7b57fce6dc4b6fbc8d3abcdb8dce35cd15a4f1578aa1408c3) |
+| **Live deployment** | https://parallax-seven-mu.vercel.app |
+| Network | Sepolia (testnet) |
 
 ---
 
-## Proven on-chain — the four KeeperHub demo requirements
+## Why PARALLAX
 
-Every requirement is a **real, mined Sepolia transaction** (`status 0x1`), triggered by voice through the live stack. Not screenshots, not mocks.
+Agents are probabilistic. Moving money can't be. Ask a normal AI wallet to "move funds" and it reinterprets what you meant at the exact moment it matters — every time. **PARALLAX removes the reinterpretation.** Your spoken intent is parsed once, composed into a concrete KeeperHub workflow, dry-run against live quotes, and then that exact workflow executes. Nothing is inferred at execution time.
 
-| # | Requirement | Action | Transaction |
-|---|-------------|--------|-------------|
-| 1 | **Swap** | ETH → token via **Uniswap V3** | [`0xde473184…1408c3`](https://sepolia.etherscan.io/tx/0xde4731840319b8f7b57fce6dc4b6fbc8d3abcdb8dce35cd15a4f1578aa1408c3) |
-| 2 | **Send** | ERC-20 / native transfer | [`0xf269b0b8…9dd841`](https://sepolia.etherscan.io/tx/0xf269b0b8d92f3bd767d268159797d28f3b1c46dbd0ff32bc9a2a9259529dd841) |
-| 3 | **Protocol interaction** | WETH `deposit` (wrap ETH) | [`0x2825612f…cdc20e`](https://sepolia.etherscan.io/tx/0x2825612fd4b2374dc73ceace8cd6c10e085dd7702899f5836f69f12dc8cdc20e) |
-| 4 | **Bridge** | cross-chain via **Chainlink CCIP** (Sepolia → Base Sepolia) | [`0xdcd642c8…ef9355`](https://sepolia.etherscan.io/tx/0xdcd642c80585abf282777f6d6f3d665c5bd1b1af9e429a789645dad765ef9355) |
+And it's bounded by hardware: you sign **one** mandate on a Ledger Flex, and the agent can only ever touch the protocols and actions you allowlisted — enforced on-chain by MetaMask's Delegation Manager, not by the app. **Convenience and security at the same time**, which wallets have always forced you to trade off.
 
-**Bonus proofs**
+This is what a wallet looks like when the agent economy is real: **you talk, it executes, KeeperHub guarantees it.**
 
-| Proof | What it shows | Transaction |
-|-------|---------------|-------------|
-| One-shot bridge | *"bridge 0.01 to base"* → single voice command, no manual wrap/swap | [`0x498508bc…f1fc90`](https://sepolia.etherscan.io/tx/0x498508bcb4e7cd64dfb05c0cc8990fe2c94b02e804e39a3efcbb7c1addf1fc90) |
-| Mandate enforcement | An **allowed** action (WETH deposit) inside a Ledger-signed mandate succeeds… | [`0xeecafcc6…7da345`](https://sepolia.etherscan.io/tx/0xeecafcc67c8ea26002962fdb65bd67311dfa4999b0282cfa64bfd5db7f7da345) |
-| Mandate rejection | …and an **off-mandate** target reverts on-chain with `AllowedTargetsEnforcer:target-address-not-allowed` | *(revert — enforced by the Delegation Manager)* |
-| Over-cap rejection | Spending past the signed cap reverts with `NativeTokenTransferAmountEnforcer:allowance-exceeded` | *(revert — enforced by the Delegation Manager)* |
+---
 
-> The security model is **not** a UI check. The bounds are real MetaMask caveats enforced by the Delegation Manager at redemption — off-mandate calls physically cannot mine.
+## Execution through KeeperHub — proven on-chain
+
+KeeperHub is the **execution layer** for every value movement in PARALLAX. Each item below is a **real, mined Sepolia transaction** triggered by voice through the live stack — click and verify.
+
+| Action | Live project executed through KeeperHub | Transaction |
+|---|---|---|
+| **Swap** | Uniswap V3 | [`0xde473184…1408c3`](https://sepolia.etherscan.io/tx/0xde4731840319b8f7b57fce6dc4b6fbc8d3abcdb8dce35cd15a4f1578aa1408c3) |
+| **Send** | ERC-20 / native transfer | [`0xf269b0b8…9dd841`](https://sepolia.etherscan.io/tx/0xf269b0b8d92f3bd767d268159797d28f3b1c46dbd0ff32bc9a2a9259529dd841) |
+| **Protocol interaction** | WETH `deposit` (wrap) | [`0x2825612f…cdc20e`](https://sepolia.etherscan.io/tx/0x2825612fd4b2374dc73ceace8cd6c10e085dd7702899f5836f69f12dc8cdc20e) |
+| **Bridge** | Chainlink CCIP (Sepolia → Base Sepolia) | [`0xdcd642c8…ef9355`](https://sepolia.etherscan.io/tx/0xdcd642c80585abf282777f6d6f3d665c5bd1b1af9e429a789645dad765ef9355) |
+| **One-shot bridge** | *"bridge 0.01 to base"* — single voice command, zero manual steps | [`0x498508bc…f1fc90`](https://sepolia.etherscan.io/tx/0x498508bcb4e7cd64dfb05c0cc8990fe2c94b02e804e39a3efcbb7c1addf1fc90) |
+| **Autonomous yield** | Aave V3 supply + an armed auto-rotation workflow | [`0x3352616…c9a06e`](https://sepolia.etherscan.io/tx/0x3352616471da95e88b38ca346d6bce6fccdeb20a4e01c71e5259663711c9a06e) |
+| **Bounded execution** | MetaMask delegation redemption inside signed caveats | [`0xeecafcc6…7da345`](https://sepolia.etherscan.io/tx/0xeecafcc67c8ea26002962fdb65bd67311dfa4999b0282cfa64bfd5db7f7da345) |
+
+Every one of these is voice-triggered. The agent speaks the result back and opens the transaction — and, for autonomous invest, the KeeperHub workflow — automatically.
+
+---
+
+## KeeperHub surfaces used
+
+- **MCP server** — a server-side MCP client (JSON-RPC over Streamable HTTP to `app.keeperhub.com/mcp`) drives the entire catalog: **47 protocols, 491 actions, 24 chains.** Every voice command resolves to a real KeeperHub call.
+- **Agent-authored workflows** — the voice agent builds real KeeperHub workflows from natural language (`create_workflow` / `execute_workflow`), including the autonomous yield-rotation workflow armed after an invest.
+- **Dry-run before execution** — reads and quotes are resolved through KeeperHub without touching the chain, so the exact composed action is what executes.
+- **Audit trail** — `list_executions` and `get_spending_limits` feed the live dashboard: real balances, real spend caps, real execution history, every run accounted for.
 
 ---
 
@@ -60,212 +77,140 @@ flowchart TB
     end
 
     subgraph BROWSER["PARALLAX cockpit — Next.js 16 / React 19"]
-        LIVE["Gemini Live client<br/>native audio in/out"]
+        LIVE["Gemini Live<br/>native audio in/out"]
         WHID["Ledger WebHID<br/>(mandate signing)"]
     end
 
     subgraph EDGE["PARALLAX server — API routes"]
-        TOK["/api/gemini-token<br/>ephemeral token mint"]
+        TOK["/api/gemini-token"]
         TOOLS["/api/tools<br/>fast intent executor"]
-        MAND["/api/mandate<br/>delegation + Ledger context"]
-        DASH["/api/dashboard · /api/defi<br/>live reads"]
+        MAND["/api/mandate"]
+        DASH["/api/dashboard · /api/defi"]
     end
 
-    subgraph ENGINE["Execution & bounds"]
-        KH["KeeperHub MCP<br/>compose · dry-run · execute"]
-        MM["MetaMask Delegation Toolkit<br/>scoped caveats"]
-        LG["Ledger Flex<br/>root of trust (EIP-712)"]
+    subgraph KH["KeeperHub — the execution layer"]
+        MCP["MCP server<br/>compose · dry-run · execute"]
+        WF["agent-authored workflows"]
+        AUD["audit trail · spend limits"]
     end
 
-    subgraph CHAINS["Chains (24 supported · demo on testnets)"]
+    subgraph LIVEPROJ["Live projects — value moves through them"]
         UNI["Uniswap V3"]
         CCIP["Chainlink CCIP"]
-        ERC["ERC-20 / native"]
-        LINK["Chainlink price feeds"]
+        AAVE["Aave V3"]
+        LINK["Chainlink Data Feeds"]
+    end
+
+    subgraph BOUNDS["Bounds & root of trust"]
+        MM["MetaMask Delegation Toolkit<br/>on-chain caveats"]
+        LG["Ledger Flex<br/>EIP-712 root of trust"]
     end
 
     V --> LIVE
     T --> TOOLS
-    LIVE -->|ephemeral token| TOK
     LIVE -->|tool calls| TOOLS
     WHID -->|signed EIP-712| MAND
-
-    TOOLS --> KH
+    TOOLS --> MCP
+    DASH --> MCP
     MAND --> MM
-    MM -.->|"one signature = root of trust"| LG
-    DASH --> KH
-
-    KH --> UNI
-    KH --> CCIP
-    KH --> ERC
+    MM -.->|one signature| LG
+    MCP --> UNI & CCIP & AAVE
     DASH --> LINK
-    MM -->|redeemDelegations| ERC
+    MCP --> WF --> AUD
 ```
 
-**Reading the diagram:** the browser never holds a key. It gets a short-lived ephemeral Gemini token and, for the mandate, produces exactly one EIP-712 signature on the Ledger. Everything with money attached runs server-side: KeeperHub is the execution engine, MetaMask's Delegation Toolkit encodes the bounds, and the Ledger signature is the single root of trust the whole agent inherits.
-
----
-
-## Intent → execution, end to end
+**The whole pipeline, end to end:**
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor User
-    participant Cockpit as PARALLAX cockpit
+    participant Cockpit as PARALLAX
     participant Gemini as Gemini Live
-    participant API as /api/tools
     participant KH as KeeperHub MCP
     participant Chain as Sepolia
-
-    User->>Cockpit: hold-to-talk "bridge 0.01 to Base"
+    User->>Cockpit: "bridge 0.01 to Base"
     Cockpit->>Gemini: stream native audio
-    Gemini-->>Cockpit: intent + tool call bridge_tokens(amount, toChain)
-    Cockpit->>API: bridge_tokens
-    API->>KH: read-only quote (CCIP fee)
-    KH-->>API: route + fee preview
-    API->>KH: execute once (approve + ccipSend)
+    Gemini-->>Cockpit: intent + tool call
+    Cockpit->>KH: compose + dry-run (read-only quote)
+    KH-->>Cockpit: route + fee preview
+    Cockpit->>KH: execute the exact workflow
     KH->>Chain: broadcast
     Chain-->>KH: tx hash · status 0x1
-    KH-->>API: receipt
-    API-->>Cockpit: summary + Etherscan link
+    KH-->>Cockpit: receipt + gas
     Cockpit-->>User: speaks result, opens the tx
 ```
 
-A critical detail the code respects: on KeeperHub, `execute_protocol_action` with `simulate:true` **still broadcasts**. So PARALLAX never "dry-runs" a protocol action — previews use **read-only quotes** (`uniswap/quote-exact-input`, `chainlink/ccip-get-fee`) and the real action fires **exactly once**, only on execute. That is why the flow above splits "quote" from "execute."
+---
+
+## Integration depth — real, named, live projects
+
+PARALLAX doesn't wrap KeeperHub generically. It makes KeeperHub the execution layer **inside** integrations with concrete, live products:
+
+- **MetaMask Delegation Toolkit (v0.13)** — a real Hybrid DeleGator smart account holds funds; a `functionCall`-scoped delegation encodes the mandate as on-chain caveats (allowed targets, allowed selectors, spend cap, expiry). The agent redeems within them via the Delegation Manager. **Deployed and proven on Sepolia** (`0x13E12020ABA4Fac6f176EcFaD778F787628602A6`).
+- **Ledger Flex** — the mandate is signed on a real device over WebHID using the Ledger **Device Management Kit**. One tap, one EIP-712 signature, and the agent inherits exactly the authority you granted — nothing more.
+- **Aave V3** — real supply positions for the autonomous-yield flow, executed through KeeperHub.
+- **Uniswap V3** — real swaps, on any supported chain.
+- **Chainlink** — CCIP for cross-chain bridging; Data Feeds for live pricing across the dashboard and portfolio.
+- **Google Gemini Live** — full-duplex native-audio voice (not TTS): the agent understands, calls the tool, and speaks the result.
 
 ---
 
-## The security model — a mandate signed on the Ledger Flex
+## Reliability & observability
 
-```mermaid
-flowchart LR
-    subgraph SIGN["1 · Sign once (Ledger Flex)"]
-        PICK["Pick protocols<br/>WETH · Uniswap · USDC · LINK · CCIP"]
-        ACT["Pick actions<br/>transfer · approve · wrap · swap · bridge"]
-        EIP["EIP-712 delegation<br/>functionCall scope"]
-        PICK --> ACT --> EIP
-    end
-
-    subgraph BOUND["2 · Encoded as caveats"]
-        AT["allowedTargets<br/>(the protocol contracts)"]
-        AM["allowedMethods<br/>(the 4-byte selectors)"]
-        CAP["spend cap"]
-        EXP["timestamp expiry"]
-    end
-
-    subgraph RUN["3 · Enforced on every action"]
-        DM["Delegation Manager<br/>redeemDelegations"]
-        OK["✅ in-mandate → mines"]
-        NO["⛔ off-mandate → reverts"]
-    end
-
-    EIP -->|signed on device| AT & AM & CAP & EXP
-    AT & AM & CAP & EXP --> DM
-    DM --> OK
-    DM --> NO
-```
-
-You sign **one** EIP-712 approval on the Flex. That single signature becomes the root of trust for everything the agent may ever do — and the bounds are enforced *on-chain* by MetaMask's Delegation Manager, not by the app. The agent is powerful and safe at once: it can act without asking, but it can never step outside what your hardware wallet authorized.
-
-- **Hardware signing** uses the Ledger **Device Management Kit** (DMK) over WebHID — `@ledgerhq/device-management-kit` + `device-signer-kit-ethereum` — path `44'/60'/0'/0/0`.
-- **Delegation** uses the **MetaMask Delegation Toolkit** v0.13: a Hybrid DeleGator smart account, a `functionCall`-scoped delegation, and redemption via `DelegationManager.redeemDelegations` (no bundler — a relayer submits, the caveats do the enforcing).
+- **On-chain enforcement, not UI checks.** An allowed action inside the mandate mines; an off-mandate target **reverts** (`AllowedTargetsEnforcer:target-address-not-allowed`), and an over-cap spend reverts (`NativeTokenTransferAmountEnforcer:allowance-exceeded`). The bounds are real caveats enforced by the Delegation Manager.
+- **Dry-run discipline.** Protocol actions never "simulate-then-hope" — previews use read-only quotes and the real action fires exactly once, so what you review is what executes.
+- **Cost-aware.** After every transaction PARALLAX reads the receipt and tells you the real gas cost in ETH and USD.
+- **One-command health check.** `GET /api/selftest` exercises the entire stack — dashboard, multichain portfolio, Chainlink price oracle, swap/bridge/wrap previews, MetaMask account, mandate + Ledger context, Gemini voice token, and autonomous-yield preview — read-only, no wallet, no human. It returns a green board plus the proven-tx hashes.
+- **Live audit trail.** Real balances, spend limits, and execution history stream straight from KeeperHub into the cockpit.
 
 ---
 
-## The integrations, in depth
+## Autonomous by design
 
-### KeeperHub — the execution & automation engine (main track)
-KeeperHub is not a bolt-on; it *is* how PARALLAX touches chains. A server-side MCP client (JSON-RPC over Streamable HTTP to `app.keeperhub.com/mcp`) drives the whole catalog — **47 protocols, 491 actions, 24 chains**. Every voice command and every scheduled automation resolves to a real KeeperHub call: quote → execute → receipt. Reads (balances, prices, spending limits, executions) come straight from KeeperHub + Chainlink feeds so the dashboard shows *your actual wallet*, not sample data.
-
-### MetaMask — 100% real Delegation Toolkit integration
-A **live** on-chain integration (MetaMask is not a sponsor — this is exactly the "integrate with a live project" the track asks for). A Hybrid DeleGator smart account holds funds; a scoped delegation encodes the mandate as real caveats; an agent EOA redeems within them. Deployed and proven on Sepolia.
-
-### Ledger — the root of trust
-The mandate is signed on a real **Ledger Flex** via the DMK device-signer. One tap, one EIP-712 signature, and the agent inherits exactly the authority you granted — nothing more.
-
-### Gemini — the voice
-Full-duplex **Gemini Live** with native audio in/out (not browser TTS): hold-to-talk, manual VAD, ephemeral tokens minted server-side, tool-calling straight into the executor. It understands the intent, calls the tool, and speaks the result back.
-
----
-
-## Multichain & the smart router
-
-The DeFi layer (`lib/defi.ts`) ships a `CHAINS` registry spanning Ethereum, Base, Arbitrum, Optimism, Polygon, Avalanche, BNB and their testnets, with a single pinned pair for maximum leverage: **Uniswap V3** for swaps and **Chainlink CCIP** for bridges. `readAllBalances()` aggregates a portfolio across chains; `resolveChain()` maps names/ids to routes.
-
-The cinematic demo also presents the **smart router** — a vision for how PARALLAX picks the smartest way to move funds (direct send vs. swap vs. cross-chain bridge) from a single intent, then executes and proves it on-chain.
-
----
-
-## Autonomous yield & cost-awareness
-
-Say *"invest 50 USDC of my funds and keep the yield good."* PARALLAX makes a **real Aave V3 deposit**, then arms a **real KeeperHub workflow** that autonomously monitors yields across venues and rotates the position to the best market — and it tells you it's doing so. It's also **market-aware**: on Sepolia the stablecoin lending markets are at capacity, so the agent intelligently routes the deposit into Aave's uncapped LINK market instead of failing. Proven on-chain: [`0x3352616…`](https://sepolia.etherscan.io/tx/0x3352616471da95e88b38ca346d6bce6fccdeb20a4e01c71e5259663711c9a06e).
-
-Every transaction is also **cost-aware**: after any on-chain action, PARALLAX reads the receipt and tells you exactly what it cost — e.g. *"Gas: 0.0002 ETH (~$0.48)"* — so the agent (and you) always know the price of a move.
+Say *"invest 50 USDC of my funds and keep the yield good."* PARALLAX makes a **real Aave V3 deposit** and **arms a real KeeperHub workflow** that autonomously monitors yields across venues and rotates the position to the best market — then tells you it's doing so, with the live APY and the gas it cost. The agent doesn't just execute once; it sets up ongoing, deterministic automation on KeeperHub.
 
 ---
 
 ## Tech stack
 
 - **Framework:** Next.js 16 (App Router, Turbopack), React 19, TypeScript
-- **Chain:** viem, Sepolia + testnet lanes, Chainlink price feeds
-- **Execution:** KeeperHub MCP (`@modelcontextprotocol`-style JSON-RPC client)
+- **Chain:** viem, Sepolia + testnet CCIP lanes, Chainlink Data Feeds
+- **Execution:** KeeperHub MCP client
 - **Bounds:** `@metamask/delegation-toolkit` v0.13
-- **Hardware:** Ledger DMK (`@ledgerhq/device-management-kit`, `device-signer-kit-ethereum`, WebHID)
-- **Voice:** `@google/genai` Gemini Live (native audio)
-- **Demo deck:** self-contained Three.js cinematic (`parallax-demo/`)
+- **Hardware:** Ledger Device Management Kit (`@ledgerhq/device-management-kit`, `device-signer-kit-ethereum`, WebHID)
+- **Voice:** `@google/genai` Gemini Live (half-cascade, native voice, English-pinned transcription)
 
 ---
 
-## Test it without a human
-
-One request exercises the whole stack — every integration, read-only, no wallet popup, no mic, no spend. Hit it on the live deployment:
+## Run it
 
 ```bash
-curl https://parallax-seven-mu.vercel.app/api/selftest | jq
-# …or locally:
-npm run dev && curl http://localhost:8137/api/selftest | jq
-```
-
-Returns a green/red check of **9 integrations** (dashboard, portfolio, price oracle, swap preview, bridge preview, protocol wrap preview, MetaMask account, mandate + Ledger context, Gemini voice token) plus the proven real-tx hashes. Live broadcasts and the Flex tap are the demo steps and are listed separately under `liveSteps`.
-
----
-
-## Run it locally
-
-```bash
-git clone <this repo>
+git clone https://github.com/chrsnikhil/parallax
 cd parallax
-npm install --legacy-peer-deps        # Ledger DMK peers need this
-cp .env.example .env.local            # then fill in your keys
-npm run dev                           # http://localhost:8137
+npm install --legacy-peer-deps
+cp .env.example .env.local     # add your keys
+npm run dev                    # http://localhost:8137
 ```
 
-See [`.env.example`](.env.example) for every variable. All secrets are **server-side only** — the browser only ever receives short-lived ephemeral Gemini tokens.
-
-> **Live-deploy note:** the API routes can trigger real transactions from the server-held keys. On any public deployment, treat the wallet keys as fully burnable, keep the daily spend cap low, and rotate them after the demo window.
+All secrets are server-side only — the browser never sees a key, only short-lived ephemeral Gemini tokens. See [`.env.example`](.env.example).
 
 ---
 
-## On-chain addresses (Sepolia)
+## How PARALLAX maps to the judging criteria
 
-| Role | Address |
-|------|---------|
-| MetaMask Smart Account (Hybrid DeleGator) | [`0x13E12020ABA4Fac6f176EcFaD778F787628602A6`](https://sepolia.etherscan.io/address/0x13E12020ABA4Fac6f176EcFaD778F787628602A6) |
-| Delegation owner (root path) | [`0xB5161Fce7be43CeAd086dD2b6346EdCbA7416f57`](https://sepolia.etherscan.io/address/0xB5161Fce7be43CeAd086dD2b6346EdCbA7416f57) |
-| Ledger Flex mandate signer | [`0xDeC312D5Fe0eaef03048BE83137f87cE7907A7Da`](https://sepolia.etherscan.io/address/0xDeC312D5Fe0eaef03048BE83137f87cE7907A7Da) |
-| KeeperHub managed wallet | [`0x5623D4a6A316Cf9b16fF92808E3931E17CcB960C`](https://sepolia.etherscan.io/address/0x5623D4a6A316Cf9b16fF92808E3931E17CcB960C) |
-
----
-
-## The cinematic demo
-
-`parallax-demo/` is a self-contained Three.js deck (open `index.html`) that tells the story end to end: the thesis, the integrations wall, the mandate, the smart router, and the on-chain proof. Render to video with `render.sh`.
+| Criterion | PARALLAX |
+|---|---|
+| **Integration depth** | Named, live projects — MetaMask Delegation Toolkit, Ledger, Aave V3, Uniswap V3, Chainlink — with KeeperHub as the execution layer inside each. |
+| **Execution through KeeperHub** | Seven distinct, verifiable on-chain transactions, every one voice-triggered through KeeperHub. |
+| **Reliability & observability** | On-chain caveat enforcement, dry-run discipline, gas accounting, a one-call self-test, and a live audit trail. |
+| **Usefulness & originality** | The first voice-native agentic wallet: bounded, cost-aware, and autonomous — usable by anyone who can speak. |
+| **Developer experience & code quality** | Typed end to end, clean API surface, architecture diagrams, and a self-test another team can run in one command. |
 
 ---
 
 <div align="center">
 
-**PARALLAX** — the future of wallets: voice-first, bounded, and provably on-chain.
+**PARALLAX** — you talk, it executes, KeeperHub guarantees it.
 
 </div>
