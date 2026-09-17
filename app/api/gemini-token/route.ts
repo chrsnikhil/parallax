@@ -15,7 +15,11 @@ import { GoogleGenAI, Modality, Type } from "@google/genai"
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
-const MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-2.5-flash-native-audio-latest"
+// Half-cascade Live model: uses a discrete STT that HONORS inputAudioTranscription
+// languageCodes, so the transcript stays English. The native-audio model
+// (gemini-2.5-flash-native-audio) ignores the hint and transliterates the
+// owner's accent into other scripts (known Google limitation).
+const MODEL = process.env.GEMINI_LIVE_MODEL || "gemini-live-2.5-flash-preview"
 
 // A distinct Gemini prebuilt voice per clay character.
 const VOICES: Record<string, string> = {
@@ -253,7 +257,6 @@ export async function POST(req: Request) {
               },
             ],
             systemInstruction: SYSTEM,
-            enableAffectiveDialog: true,
           },
         },
         httpOptions: { apiVersion: "v1alpha" },
